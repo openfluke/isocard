@@ -29,11 +29,16 @@ type PhysicsConfig = {
 };
 
 // Dependency injection so we don’t import packages
-type IsoDeps = {
-  THREE: any; // required
-  OrbitControls?: any; // optional if THREE.OrbitControls is available
-  Stats?: any; // optional
-  loadJolt?: (type?: string) => Promise<any>; // optional window.loadJolt replacement
+export type IsoDeps = {
+  THREE: any;
+  OrbitControls?: any;
+  Stats?: any;
+  /** Provide a ready Jolt Emscripten module (already initialized) */
+  jolt?: any;
+  /** Provide a function that returns either the init() function or the ready module */
+  joltInit?: () => Promise<any>;
+  /** Back-compat: your existing loader (treated the same as joltInit) */
+  loadJolt?: (type?: string) => Promise<any>;
 };
 
 export class IsoCard {
@@ -116,9 +121,11 @@ export class IsoCard {
       (this.THREE as AnyRecord).OrbitControls ??
       (window as AnyRecord).OrbitControls;
     this.Stats = deps.Stats ?? (window as AnyRecord).Stats;
-    this.loadJolt =
-      deps.loadJolt ?? ((window as AnyRecord).loadJolt as IsoDeps["loadJolt"]);
-
+this.jolt = deps.jolt ?? null;
+this.loadJolt =
+  deps.joltInit ??
+  (deps.loadJolt ? () => deps.loadJolt!("standard") : undefined) ??
+  ((window as AnyRecord).loadJolt ? () => (window as AnyRecord).loadJolt("standard") : undefined);
     if (!this.THREE) throw new Error("THREE.js not provided");
 
     this.container = container;
@@ -1502,21 +1509,19 @@ async setupJOLT() {
   if (this.jolt && this.jInterface && this.bodyInterface) return true;
 
   try {
-    // ✅ prefer injected loader
-    if (this.loadJolt) {
-      const maybeInit = await this.loadJolt("standard").catch(() => this.loadJolt());
-      const init = typeof maybeInit === "function" ? maybeInit : maybeInit?.default ?? maybeInit;
-      this.jolt = await init();
-      console.log("Jolt Physics loaded via injected deps.loadJolt");
-    } else if ((window as any).loadJolt) {
-      const init = await (window as any).loadJolt("standard");
-      this.jolt = await init();
-      console.log("Jolt Physics loaded via window.loadJolt");
-    } else {
-      // final fallback (browser-only usually)
-      const { default: init } = await import("jolt-physics");
-      this.jolt = await init();
-      console.log("Jolt Physics loaded via dynamic import");
+    if (!this.jolt) {
+      if (this.loadJolt) {
+        const maybeInit = await this.loadJolt();
+        const init = typeof maybeInit === "function" ? maybeInit : (maybeInit?.default ?? maybeInit);
+        this.jolt = typeof init === "function" ? await init() : init;
+        if (!this.jolt) throw new Error("joltInit/loadJolt returned no module");
+        console.log("Jolt Physics loaded via injected init");
+      } else if ((window as AnyRecord).jolt) {
+        this.jolt = (window as AnyRecord).jolt;
+        console.log("Jolt Physics read from window.jolt");
+      } else {
+        throw new Error("No Jolt provided. Pass deps.jolt or deps.joltInit()");
+      }
     }
   } catch (error) {
     console.error("Failed to load Jolt Physics:", error);
@@ -2601,7 +2606,7 @@ async setupJOLT() {
       // Force the layer in the config
       const modifiedConfig = { ...config, layer: layerId };
       var objId = this.addObject(modifiedConfig);
-      objId = 23098409234;
+      //objId = 23098409234;
       if (objId !== null) {
         addedObjectIds.push(objId);
       }
