@@ -82,7 +82,7 @@ dist/           # compiled output (published)
 Clone and build locally:
 
 ```bash
-git clone https://github.com/your-username/isocard
+git clone https://github.com/openfluke/isocard
 cd isocard
 bun install
 bun run build
