@@ -1,32 +1,39 @@
-# isocard
+# Isocard
 
-**isocard** is a lightweight, isomorphic physics + AI scene wrapper built on top of [Three.js](https://threejs.org/) and [Jolt Physics](https://github.com/jrouwe/JoltPhysics).  
-It provides a JSON-driven way to define, load, and run physics experiments that can run in both the browser and server environments.
+**Isocard** is a versatile, isomorphic scene management library built on top of [Three.js](https://threejs.org/) and [Jolt Physics](https://github.com/jrouwe/JoltPhysics). It provides a unified interface for creating, managing, and simulating 3D scenes with physics and optional AI-driven behaviors, seamlessly supporting both client-side (browser) and server-side (Node.js/Bun) environments. With a JSON-driven configuration, Isocard enables developers to define complex scenes, run physics simulations, and integrate automation or AI policies with ease.
 
 ---
 
 ## ✨ Features
 
-- 🚀 **Isomorphic runtime** — same code works in browser or server (Node/Bun).
-- 🎮 **Three.js + Jolt Physics** integration out of the box.
-- 📦 **JSON-defined scenes** — easy to save, share, and replay experiments.
-- 🔄 **Deterministic replay** — record inputs and re-run with the same results.
-- 🧩 **Extensible** — wrap with controllers, automation, or AI policies.
-- 🔌 **Headless mode** — run simulations without rendering for server-side compute.
-
----
+- **Isomorphic Runtime**: Run the same code in the browser or on a server, enabling consistent behavior across environments.
+- **Three.js & Jolt Physics Integration**: Combines powerful 3D rendering with robust physics simulations out of the box.
+- **JSON-Driven Scenes**: Define scenes using a simple, serializable JSON format for easy creation, sharing, and replaying of experiments.
+- **Deterministic Simulations**: Record inputs and replay simulations with consistent results for reliable testing and experimentation.
+- **Headless Mode**: Execute physics simulations without rendering, ideal for server-side computations or AI training.
+- **Extensible Architecture**: Integrate custom controllers, automation scripts, or AI policies to enhance scene behavior.
+- **Dynamic Object Management**: Add, update, or remove objects with physics properties in real-time.
+- **Camera & Layer Control**: Fine-tune camera settings and manage object layers for visibility and rendering control.
 
 ## 📦 Installation
 
-```bash
-# with bun
-bun add isocard
+Install Isocard using your preferred package manager:
 
-# or with npm
-npm install isocard
+```bash
+# Using Bun
+bun add @openfluke/isocard
+
+# Using npm
+npm install @openfluke/isocard
 ```
 
----
+Ensure you have the required dependencies installed:
+
+```bash
+bun add three jolt-physics
+# or
+npm install three jolt-physics
+```
 
 ## 🛠 Usage
 
@@ -69,33 +76,58 @@ console.log("Simulation running with", iso.dynamicObjects.length, "dynamic objec
 ## 📂 Project Structure
 
 ```
-src/
-  isocard.ts    # main IsoCard class
-  index.ts      # entrypoint
-dist/           # compiled output (published)
+├── src/
+│   ├── isocard.ts    # Core Isocard class implementation
+│   ├── index.ts      # Package entrypoint
+├── dist/             # Compiled output (published to npm)
+├── package.json      # Project metadata and scripts
+├── README.md         # Project documentation
 ```
 
 ---
 
-## 🧪 Development
+## 🧪 Getting Started with Development
 
-Clone and build locally:
+To develop or contribute to Isocard, follow these steps:
 
-```bash
-git clone https://github.com/openfluke/isocard
-cd isocard
-bun install
-bun run build
-```
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/openfluke/isocard
+   cd isocard
+   ```
 
-To use it in another local project:
+2. **Install Dependencies**:
+   ```bash
+   bun install
+   ```
 
-```bash
-bun link         # in isocard repo
-bun link isocard # in your test project
-```
+3. **Build the Project**:
+   ```bash
+   bun run build
+   ```
+
+4. **Link Locally for Testing**:
+   ```bash
+   bun link
+   ```
+   In your test project:
+   ```bash
+   bun link @openfluke/isocard
+   ```
+
+5. **Run a Development Server** (for frontend testing):
+   ```bash
+   bun run dev
+   ```
 
 ---
+
+## 🌐 Resources
+
+- [Three.js Documentation](https://threejs.org/docs/)
+- [Jolt Physics GitHub](https://github.com/jrouwe/JoltPhysics)
+- [Example Frontend Implementation](https://github.com/openfluke/icfront)
+
 
 ## 📜 License
 
