@@ -129,6 +129,36 @@ To develop or contribute to Isocard, follow these steps:
 - [Example Frontend Implementation](https://github.com/openfluke/icfront)
 
 
+
+
+## IsoCard vs Existing Tools
+
+| Feature / Focus | Three.js (core) | Jolt (engine) | Wrappers (Ammo.js, Cannon-es, Rapier, Enable3D) | IsoCard (@openfluke/isocard) |
+|-----------------|-----------------|---------------|-----------------------------------------------|------------------------------|
+| Rendering       | ✅ (WebGL)      | ❌            | ✅ (via Three.js)                             | ✅ (via injected Three.js)   |
+| Physics         | ❌              | ✅ (C++)      | ✅ (JS/WASM bindings)                         | ✅ (Jolt via JS/WASM + DI)  |
+| Browser support | ✅              | WASM ports    | ✅                                            | ✅ (React/Vite/Ionic ready)  |
+| Server/Headless mode | ❌        | Native only   | Rare / gluey                                 | ✅ (Node/Bun headless physics) |
+| Isomorphic parity | ❌          | ❌            | ❌                                            | ✅ (same JSON runs front & back) |
+| Scene definition | Manual code  | Manual code   | Sometimes entity configs                     | ✅ JSON schema (interpretJSON) |
+| Play/Stop physics | ❌         | Engine-level  | Possible but not first-class                  | ✅ One-liner API (startPhysics) |
+| Camera & controls | Manual setup | ❌           | Manual                                       | ✅ JSON + API (setCameraConfig) |
+| AI hooks / recording | ❌       | ❌            | ❌                                            | ✅ (player data → AI controller) |
+| Remix/share loop | ❌         | ❌            | ❌                                            | ✅ Built-in (JSON scenes sharable) |
+| Multi-server watching | ❌     | ❌            | ❌                                            | ✅ Overlay & opacity controls |
+| Target users    | Graphics devs   | Engine/game devs | Hobby/game devs                           | Web devs, AI/robotics, educators |
+
+## Key Takeaway
+
+IsoCard isn’t “just another wrapper.” It’s the isomorphic runtime:
+
+- Load a scene from JSON.
+- Run it in browser or headless server.
+- Toggle physics, camera, and AI controllers with simple APIs.
+- Record, replay, remix, and share without touching engine internals.
+
+
+
 ## 📜 License
 
 Apache License 2.0 © 2025 Samuel Watson

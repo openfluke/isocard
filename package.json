@@ -1,6 +1,6 @@
 {
   "name": "@openfluke/isocard",
-  "version": "0.0.4",
+  "version": "0.0.5",
     "description": "Isomorphic Three.js + Jolt Physics JSON scene runner for browser and server (Node/Bun).",
     "license": "Apache-2.0",
     "keywords": [
