@@ -127,6 +127,7 @@ To develop or contribute to Isocard, follow these steps:
 - [Three.js Documentation](https://threejs.org/docs/)
 - [Jolt Physics GitHub](https://github.com/jrouwe/JoltPhysics)
 - [Example Frontend Implementation](https://github.com/openfluke/icfront)
+- [Example Backend Implementation](https://github.com/openfluke/icback)
 
 
 
