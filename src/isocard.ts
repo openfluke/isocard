@@ -121,11 +121,13 @@ export class IsoCard {
       (this.THREE as AnyRecord).OrbitControls ??
       (window as AnyRecord).OrbitControls;
     this.Stats = deps.Stats ?? (window as AnyRecord).Stats;
-this.jolt = deps.jolt ?? null;
-this.loadJolt =
-  deps.joltInit ??
-  (deps.loadJolt ? () => deps.loadJolt!("standard") : undefined) ??
-  ((window as AnyRecord).loadJolt ? () => (window as AnyRecord).loadJolt("standard") : undefined);
+    this.jolt = deps.jolt ?? null;
+    this.loadJolt =
+      deps.joltInit ??
+      (deps.loadJolt ? () => deps.loadJolt!("standard") : undefined) ??
+      ((window as AnyRecord).loadJolt
+        ? () => (window as AnyRecord).loadJolt("standard")
+        : undefined);
     if (!this.THREE) throw new Error("THREE.js not provided");
 
     this.container = container;
@@ -1139,9 +1141,6 @@ this.loadJolt =
       await this.setupJOLT();
     }
 
-    // Create floor
-    this.createFloor();
-
     // Apply physics to objects that have physics config
     this.objects.forEach((obj) => {
       if (obj.config.physics) {
@@ -1504,78 +1503,94 @@ this.loadJolt =
     this.animate();
   }
 
- 
-async setupJOLT() {
-  if (this.jolt && this.jInterface && this.bodyInterface) return true;
+  async setupJOLT() {
+    if (this.jolt && this.jInterface && this.bodyInterface) return true;
 
-  try {
-    if (!this.jolt) {
-      if (this.loadJolt) {
-        const maybeInit = await this.loadJolt();
-        const init = typeof maybeInit === "function" ? maybeInit : (maybeInit?.default ?? maybeInit);
-        this.jolt = typeof init === "function" ? await init() : init;
-        if (!this.jolt) throw new Error("joltInit/loadJolt returned no module");
-        console.log("Jolt Physics loaded via injected init");
-      } else if ((window as AnyRecord).jolt) {
-        this.jolt = (window as AnyRecord).jolt;
-        console.log("Jolt Physics read from window.jolt");
-      } else {
-        throw new Error("No Jolt provided. Pass deps.jolt or deps.joltInit()");
+    try {
+      if (!this.jolt) {
+        if (this.loadJolt) {
+          const maybeInit = await this.loadJolt();
+          const init =
+            typeof maybeInit === "function"
+              ? maybeInit
+              : maybeInit?.default ?? maybeInit;
+          this.jolt = typeof init === "function" ? await init() : init;
+          if (!this.jolt)
+            throw new Error("joltInit/loadJolt returned no module");
+          console.log("Jolt Physics loaded via injected init");
+        } else if ((window as AnyRecord).jolt) {
+          this.jolt = (window as AnyRecord).jolt;
+          console.log("Jolt Physics read from window.jolt");
+        } else {
+          throw new Error(
+            "No Jolt provided. Pass deps.jolt or deps.joltInit()"
+          );
+        }
       }
+    } catch (error) {
+      console.error("Failed to load Jolt Physics:", error);
+      return false;
     }
-  } catch (error) {
-    console.error("Failed to load Jolt Physics:", error);
-    return false;
+
+    try {
+      this.time = 0;
+
+      const settings = new this.jolt.JoltSettings();
+      settings.mMaxWorkerThreads = 3;
+
+      const objectFilter = new this.jolt.ObjectLayerPairFilterTable(
+        IsoCard.NUM_OBJECT_LAYERS
+      );
+      objectFilter.EnableCollision(
+        IsoCard.LAYER_NON_MOVING,
+        IsoCard.LAYER_MOVING
+      );
+      objectFilter.EnableCollision(IsoCard.LAYER_MOVING, IsoCard.LAYER_MOVING);
+
+      const BP_LAYER_NON_MOVING = new this.jolt.BroadPhaseLayer(0);
+      const BP_LAYER_MOVING = new this.jolt.BroadPhaseLayer(1);
+      const NUM_BROAD_PHASE_LAYERS = 2;
+
+      const bpInterface = new this.jolt.BroadPhaseLayerInterfaceTable(
+        IsoCard.NUM_OBJECT_LAYERS,
+        NUM_BROAD_PHASE_LAYERS
+      );
+      bpInterface.MapObjectToBroadPhaseLayer(
+        IsoCard.LAYER_NON_MOVING,
+        BP_LAYER_NON_MOVING
+      );
+      bpInterface.MapObjectToBroadPhaseLayer(
+        IsoCard.LAYER_MOVING,
+        BP_LAYER_MOVING
+      );
+
+      settings.mObjectLayerPairFilter = objectFilter;
+      settings.mBroadPhaseLayerInterface = bpInterface;
+      settings.mObjectVsBroadPhaseLayerFilter =
+        new this.jolt.ObjectVsBroadPhaseLayerFilterTable(
+          settings.mBroadPhaseLayerInterface,
+          NUM_BROAD_PHASE_LAYERS,
+          settings.mObjectLayerPairFilter,
+          IsoCard.NUM_OBJECT_LAYERS
+        );
+
+      this.jInterface = new this.jolt.JoltInterface(settings);
+      this.jolt.destroy(settings);
+
+      this.physicsSystem = this.jInterface.GetPhysicsSystem();
+      this.bodyInterface = this.physicsSystem.GetBodyInterface();
+
+      // apply scene gravity if present
+      const g = this.sceneConfig?.gravity?.vector ?? [0, -9.81, 0];
+      this.physicsSystem.SetGravity(new this.jolt.Vec3(g[0], g[1], g[2]));
+
+      console.log("Physics initialized successfully");
+      return true;
+    } catch (error) {
+      console.error("Failed to initialize Jolt Physics:", error);
+      return false;
+    }
   }
-
-  try {
-    this.time = 0;
-
-    const settings = new this.jolt.JoltSettings();
-    settings.mMaxWorkerThreads = 3;
-
-    const objectFilter = new this.jolt.ObjectLayerPairFilterTable(IsoCard.NUM_OBJECT_LAYERS);
-    objectFilter.EnableCollision(IsoCard.LAYER_NON_MOVING, IsoCard.LAYER_MOVING);
-    objectFilter.EnableCollision(IsoCard.LAYER_MOVING, IsoCard.LAYER_MOVING);
-
-    const BP_LAYER_NON_MOVING = new this.jolt.BroadPhaseLayer(0);
-    const BP_LAYER_MOVING = new this.jolt.BroadPhaseLayer(1);
-    const NUM_BROAD_PHASE_LAYERS = 2;
-
-    const bpInterface = new this.jolt.BroadPhaseLayerInterfaceTable(
-      IsoCard.NUM_OBJECT_LAYERS,
-      NUM_BROAD_PHASE_LAYERS
-    );
-    bpInterface.MapObjectToBroadPhaseLayer(IsoCard.LAYER_NON_MOVING, BP_LAYER_NON_MOVING);
-    bpInterface.MapObjectToBroadPhaseLayer(IsoCard.LAYER_MOVING, BP_LAYER_MOVING);
-
-    settings.mObjectLayerPairFilter = objectFilter;
-    settings.mBroadPhaseLayerInterface = bpInterface;
-    settings.mObjectVsBroadPhaseLayerFilter = new this.jolt.ObjectVsBroadPhaseLayerFilterTable(
-      settings.mBroadPhaseLayerInterface,
-      NUM_BROAD_PHASE_LAYERS,
-      settings.mObjectLayerPairFilter,
-      IsoCard.NUM_OBJECT_LAYERS
-    );
-
-    this.jInterface = new this.jolt.JoltInterface(settings);
-    this.jolt.destroy(settings);
-
-    this.physicsSystem = this.jInterface.GetPhysicsSystem();
-    this.bodyInterface = this.physicsSystem.GetBodyInterface();
-
-    // apply scene gravity if present
-    const g = this.sceneConfig?.gravity?.vector ?? [0, -9.81, 0];
-    this.physicsSystem.SetGravity(new this.jolt.Vec3(g[0], g[1], g[2]));
-
-    console.log("Physics initialized successfully");
-    return true;
-  } catch (error) {
-    console.error("Failed to initialize Jolt Physics:", error);
-    return false;
-  }
-}
-
 
   updatePhysics(deltaTime) {
     // When running below 55 Hz, do 2 steps instead of 1
@@ -1584,7 +1599,6 @@ async setupJOLT() {
     // Step the physics world
     this.jInterface.Step(deltaTime, numSteps);
   }
-
 
   renderSync() {
     requestAnimationFrame(this.renderSync);
@@ -2078,7 +2092,7 @@ async setupJOLT() {
     return new this.jolt.Quat(q.x, q.y, q.z, q.w);
   }
 
- convertObjectToDynamic(id: any, physicsConfig: PhysicsConfig = {}) {
+  convertObjectToDynamic(id: any, physicsConfig: PhysicsConfig = {}) {
     if (!this.jolt || !this.jInterface) {
       console.error("Physics not initialized");
       return false;
